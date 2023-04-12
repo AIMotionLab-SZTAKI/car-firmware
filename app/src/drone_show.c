@@ -433,7 +433,7 @@ static void droneShowTimer(xTimerHandle timer) {
 
     case STATE_LANDING_LOW_BATTERY:
       if (crtpCommanderHighLevelIsTrajectoryFinished()) {
-        /* landing finished, let's got to the landed state */
+        /* landing finished, let's go to the landed state */
         setState(STATE_LANDED);
       }
       break;
