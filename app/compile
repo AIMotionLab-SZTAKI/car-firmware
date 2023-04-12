@@ -15,12 +15,29 @@ if [ "x$1" != x ]; then
 fi
 
 for VARIANT in $VARIANTS; do
-    rm -f app-config
-    cp conf/common.cfg app-config
-    echo "" >>app-config
-    cat conf/${VARIANT}.cfg >>app-config
+    BASE_BOARD=`cat conf/${VARIANT}.cfg | grep "^CONFIG_PLATFORM_" | cut -d '_' -f 3 | cut -d '=' -f 1 | tr -d ' ' | tr 'A-Z' 'a-z'`
+    if [ "x$BASE_BOARD" = x ]; then
+        echo "All variant config files must specify a CONFIG_PLATFORM_... variable"
+        exit 1
+    fi
 
-    BASE_BOARD=`cat app-config | grep "^CONFIG_PLATFORM_" | cut -d '_' -f 3 | cut -d '=' -f 1 | tr -d ' ' | tr 'A-Z' 'a-z'`
+    BASE_CONFIG=""
+    if [ "x$BASE_BOARD" = xflapper ]; then
+        BASE_CONFIG="../configs/flapper_defconfig"
+    fi
+
+    rm -f app-config
+    if [ "x$BASE_CONFIG" != x ]; then
+        cp "$BASE_CONFIG" app-config
+        echo "" >>app-config
+    else
+        touch app-config
+    fi
+
+    cat conf/common.cfg >>app-config
+    echo "" >>app-config
+
+    cat conf/${VARIANT}.cfg >>app-config
 
     make clean
     make -j 12
