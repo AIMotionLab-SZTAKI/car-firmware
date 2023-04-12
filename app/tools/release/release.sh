@@ -31,8 +31,9 @@ rm -rf "${TMP_DIR}"
 mkdir -p "${TMP_DIR}"
 
 echo "Downloading official Crazyflie release, version ${UPSTREAM_CF_VERSION}..."
-curl -sLo "${TMP_DIR}/firmware-cf2.zip" https://github.com/bitcraze/crazyflie-release/releases/download/${UPSTREAM_CF_VERSION}/firmware-cf2-${UPSTREAM_CF_VERSION}.zip
-curl -sLo "${TMP_DIR}/firmware-bolt.zip" https://github.com/bitcraze/crazyflie-release/releases/download/${UPSTREAM_CF_VERSION}/firmware-bolt-${UPSTREAM_CF_VERSION}.zip
+for PLATFORM in cf2 bolt flapper; do
+    curl -sLo "${TMP_DIR}/firmware-${PLATFORM}.zip" https://github.com/bitcraze/crazyflie-release/releases/download/${UPSTREAM_CF_VERSION}/firmware-${PLATFORM}-${UPSTREAM_CF_VERSION}.zip
+done
 
 # Variants of the firmware to build
 if [ "x$VARIANTS" = x ]; then
@@ -46,7 +47,7 @@ for VARIANT in ${VARIANTS}; do
     rm -rf build *.bin
     ./compile ${VARIANT}
 
-    BASE_BOARD=`cat app-config | grep "^CONFIG_PLATFORM_" | cut -d '_' -f 3 | cut -d '=' -f 1 | tr -d ' ' | tr 'A-Z' 'a-z'`
+    BASE_BOARD=`cat app-config | grep "^CONFIG_PLATFORM_" | tail -1 | cut -d '_' -f 3 | cut -d '=' -f 1 | tr -d ' ' | tr 'A-Z' 'a-z'`
 
     ZIP_NAME="skybrush-${BASE_BOARD}_${VARIANT}_${VERSION}"
     rm -f "${TMP_DIR}"/${BASE_BOARD}-skybrush-*.bin
