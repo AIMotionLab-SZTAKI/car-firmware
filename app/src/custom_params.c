@@ -75,7 +75,11 @@ static const customParamTableEntry_t params[] = {
   /* Position controller PID tuning */
   { "posCtlPid", "xVelMax", 2, OPTIONAL },
   { "posCtlPid", "yVelMax", 2, OPTIONAL },
+#ifdef CONFIG_PLATFORM_BOLT
+  { "posCtlPid", "zVelMax", 1.5, OPTIONAL },
+#else
   { "posCtlPid", "zVelMax", 0.8, OPTIONAL },
+#endif
   { "posCtlPid", "vxKFF", 1, OPTIONAL },
   { "posCtlPid", "vyKFF", 1, OPTIONAL },
 
