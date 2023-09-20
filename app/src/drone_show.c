@@ -99,8 +99,10 @@ static const char* stateMessages[NUM_STATES] = {
  * should be derived from that. Takeoff duration should not be a #define macro */
 #ifdef CONFIG_SHOW_SMOOTH_TAKEOFF
 #  define TAKEOFF_CORRECTION_FACTOR (2 + 3.0f / 16)
+#  define LANDING_CORRECTION_FACTOR (2 + 3.0f / 16)
 #else
 #  define TAKEOFF_CORRECTION_FACTOR 1.0f
+#  define LANDING_CORRECTION_FACTOR 1.0f
 #endif
 
 static StaticTimer_t timerBuffer;
@@ -723,7 +725,7 @@ static bool onEnteredState(show_state_t state, show_state_t oldState) {
       state == STATE_LANDING_LOW_BATTERY
         ? landingHeightForLowBattery
         : landingHeight,
-      LANDING_VELOCITY_METERS_PER_SEC / TAKEOFF_CORRECTION_FACTOR,
+      LANDING_VELOCITY_METERS_PER_SEC / LANDING_CORRECTION_FACTOR,
       /* relative = */ 0
     );
   }
