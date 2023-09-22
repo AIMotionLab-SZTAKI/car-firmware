@@ -15,6 +15,9 @@ VERSION=`date +%Y%m%d`
 # Upstream Crazyflie version on top of which this firmware is built
 UPSTREAM_CF_VERSION=2023.02
 
+# Whether to use an alternative nRF firmware, compiled locally
+USE_ALTERNATIVE_NRF_FIRMWARE=
+
 ###############################################################################
 
 CURRENT_DIR="`pwd`"
@@ -30,14 +33,28 @@ TMP_DIR="/tmp/cf-build"
 rm -rf "${TMP_DIR}"
 mkdir -p "${TMP_DIR}"
 
+PLATFORMS="cf2 bolt flapper"
+
 echo "Downloading official Crazyflie release, version ${UPSTREAM_CF_VERSION}..."
-for PLATFORM in cf2 bolt flapper; do
+for PLATFORM in ${PLATFORMS}; do
     curl -sLo "${TMP_DIR}/firmware-${PLATFORM}.zip" https://github.com/bitcraze/crazyflie-release/releases/download/${UPSTREAM_CF_VERSION}/firmware-${PLATFORM}-${UPSTREAM_CF_VERSION}.zip
 done
 
 # Variants of the firmware to build
 if [ "x$VARIANTS" = x ]; then
     VARIANTS=`find "${APP_ROOT}/conf" -name '*.cfg' -exec basename {} .cfg \; | grep -v common | sort`
+fi
+
+# Compile radio firmware if needed
+if [ "x$USE_ALTERNATIVE_NRF_FIRMWARE" = x1 ]; then
+    for PLATFORM in ${PLATFORMS}; do
+        echo "Compiling nRF firmware for ${PLATFORM}..."
+        cd ../crazyflie2-nrf-firmware
+        PLATFORM=${PLATFORM} make clean
+        PLATFORM=${PLATFORM} make
+        cp ${PLATFORM}_nrf.bin "${TMP_DIR}/nrf-firmware-${PLATFORM}.bin"
+        PLATFORM=${PLATFORM} make clean
+    done
 fi
 
 cd "${APP_ROOT}"
@@ -57,7 +74,14 @@ for VARIANT in ${VARIANTS}; do
 
     cp "${TMP_DIR}/firmware-${BASE_BOARD}.zip" "${TMP_DIR}/${ZIP_NAME}.zip"
     mv ${TMP_DIR}/${BASE_BOARD}-*.bin "${TMP_DIR}/${BASE_BOARD}-${UPSTREAM_CF_VERSION}.bin"
+
     ( cd "${TMP_DIR}" && zip "${ZIP_NAME}.zip" "${BASE_BOARD}-${UPSTREAM_CF_VERSION}.bin" )
+
+    if [ "x$USE_ALTERNATIVE_NRF_FIRMWARE" = x1 ]; then
+        cp "${TMP_DIR}/nrf-firmware-${BASE_BOARD}.bin" "${TMP_DIR}/${BASE_BOARD}_nrf-${UPSTREAM_CF_VERSION}.bin"
+        ( cd "${TMP_DIR}" && zip "${ZIP_NAME}.zip" "${BASE_BOARD}_nrf-${UPSTREAM_CF_VERSION}.bin" )
+    fi
+
     rm -f "${TMP_DIR}"/${BASE_BOARD}-*.bin
 done
 
